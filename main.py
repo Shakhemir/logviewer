@@ -4,9 +4,11 @@ from jinja2 import Template
 import uvicorn
 import asyncio
 import os
+import dotenv
 import json
 
-PORT = 337  # Порт для фастапи
+dotenv.load_dotenv()
+PORT = int(os.getenv("FASTAPI_PORT"))  # Порт для фастапи
 
 with open("assets/log_apps.json", "r", encoding="utf-8") as f:
     log_paths = json.load(f)
