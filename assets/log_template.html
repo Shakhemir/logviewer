@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Real-time Log Viewer</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        #log {
+            width: 100%;
+            height: calc(100% - 60px);  /* 100% высоты страницы минус высота заголовка */
+            overflow-y: auto;  /* Автоматический скроллинг по вертикали */
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #f9f9f9;
+            font-family: monospace;  /* Моноширинный шрифт */
+            white-space: pre-wrap;  /* Сохранение пробелов и переносов строк */
+            box-sizing: border-box;  /* Учитываем padding и border в общей ширине и высоте элемента */
+        }
+    </style>
+</head>
+<body>
+    <h1>Real-time Log Viewer: "{{ log_app }}"</h1>
+    <div id="log"></div>
+
+    <label>
+        <input type="checkbox" id="autoscroll" checked>
+        Автоскролл
+    </label>
+
+    <script>
+        let autoscroll = true;
+        async function fetchLog() {
+            try {
+                const response = await fetch('/{{ log_app }}/tail');
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let result = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    result += decoder.decode(value);
+                    document.getElementById('log').innerHTML = result;
+
+                    // Прокрутка вниз, если автоскролл включен
+                    if (autoscroll) {
+                        window.scrollTo(0, document.body.scrollHeight);  // Прокрутка вниз
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching log:', error);
+            }
+        }
+
+        // Устанавливаем обработчик события на чекбокс
+        document.getElementById('autoscroll').addEventListener('change', function() {
+            autoscroll = this.checked;
+        });
+
+        // Сразу загружаем лог при загрузке страницы
+        fetchLog();
+    </script>
+</body>
+</html>
