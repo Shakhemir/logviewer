@@ -34,7 +34,7 @@
         let autoscroll = true;
         async function fetchLog() {
             try {
-                const response = await fetch('/{{ log_app }}/tail');
+                const response = await fetch('/{{ prefix }}/{{ log_app }}/tail');
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let result = '';

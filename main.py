@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from fastapi.responses import HTMLResponse, StreamingResponse
 from jinja2 import Template
 import uvicorn
@@ -9,6 +9,8 @@ import json
 
 dotenv.load_dotenv()
 PORT = int(os.getenv("FASTAPI_PORT"))  # Порт для фастапи
+URL_PREFIX = os.getenv("URL_PREFIX")
+
 
 with open("assets/log_apps.json", "r", encoding="utf-8") as f:
     log_paths = json.load(f)
@@ -16,8 +18,9 @@ with open("assets/log_apps.json", "r", encoding="utf-8") as f:
 
 def create_app():
     app = FastAPI(title="FastAPI")
+    log_app = APIRouter(prefix=URL_PREFIX)
 
-    @app.get("/{log_app}/tail")
+    @log_app.get("/{log_app}/tail")
     async def stream_log(log_app: str):
         file_path = log_paths.get(log_app)
 
@@ -37,12 +40,13 @@ def create_app():
 
         return StreamingResponse(log_generator(), media_type="text/html")
 
-    @app.get("/{log_app}", response_class=HTMLResponse)
+    @log_app.get("/{log_app}", response_class=HTMLResponse)
     async def get_log_viewer(log_app: str):
         with open("assets/log_template.html", "r", encoding="utf-8") as f:
             html_content = f.read()
-        return HTMLResponse(content=Template(html_content).render(log_app=log_app))
+        return HTMLResponse(content=Template(html_content).render(log_app=log_app, prefix=URL_PREFIX))
 
+    app.include_router(log_app)
     return app
 
 
@@ -51,7 +55,7 @@ app = create_app()
 
 async def run():
     cnfg = uvicorn.Config(
-        app="app.webserver:app",
+        app="main:app",
         reload=True,
         port=PORT,
     )
